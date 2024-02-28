@@ -1,69 +1,52 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour
+public class platformsMoving : MonoBehaviour
 {
-    private Rigidbody rb;
-
     [SerializeField] private float moveSpeed = 5f;
-    [SerializeField] private float turnSmoothTime = 0.1f;
-    [SerializeField] private float jumpForce = 5f;
+    private Vector3 startPosition;
+    private Vector3 targetPosition;
+    [SerializeField] private float moveDistance = 5f;
+    private Rigidbody rb;
+    private bool movingUp = true;
 
-    private float turnSmoothVelocity;
-    private bool isGrounded = false;
-
-    private void Start()
+    void Start()
     {
-        rb = GetComponent<Rigidbody>();
+        startPosition = transform.position;
+        targetPosition = startPosition + Vector3.up * moveDistance;
+        rb = gameObject.AddComponent<Rigidbody>();
+        rb.isKinematic = true;
     }
 
-    private void Update()
+    void FixedUpdate()
     {
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
+        MovePlatform();
+    }
 
-        Vector3 direction = new Vector3(horizontal, 0, vertical).normalized;
+    void MovePlatform()
+    {
+        Vector3 targetDirection = movingUp ? Vector3.up : Vector3.down;
+        Vector3 newPosition = rb.position + targetDirection * moveSpeed * Time.fixedDeltaTime;
+        newPosition.y = Mathf.Clamp(newPosition.y, startPosition.y, startPosition.y + moveDistance);
+        
+        rb.MovePosition(newPosition);
 
-        if (direction.magnitude >= 0.1f)
+        if (newPosition.y >= startPosition.y + moveDistance)
         {
-            float cameraAngle = Camera.main.transform.eulerAngles.y;
-            float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + cameraAngle;
-            float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
-            transform.rotation = Quaternion.Euler(0f, angle, 0f);
-
-            Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-            rb.MovePosition(rb.position + moveDir.normalized * moveSpeed * Time.deltaTime);
+            movingUp = false;
         }
-
-        if (isGrounded && Input.GetButtonDown("Jump"))
+        else if (newPosition.y <= startPosition.y)
         {
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.VelocityChange);
-            Debug.Log("isGrounded");
-            isGrounded = false;
-        }
-        if (this.transform.position.y<=-10)
-        {
-            Respawn();
-
+            movingUp = true;
         }
     }
 
-
-    private void OnTriggerEnter(Collider collision)
+    private void OnTriggerEnter(Collider other)
     {
-        if (collision.gameObject.CompareTag("Ground"))
-        {
-            isGrounded = true;
-
-        }
-
+        other.transform.SetParent(transform);
     }
 
-    private void Respawn()
+    private void OnTriggerExit(Collider other)
     {
-        transform.position = GameManager.Instance.lastCheckPointPos;
-        rb.velocity = Vector3.zero;
+        other.transform.SetParent(null);
     }
-
 }
