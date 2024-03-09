@@ -42,7 +42,7 @@ public class PlayerController : MonoBehaviour
             Debug.Log("isGrounded");
             isGrounded = false;
         }
-        if (this.transform.position.y<=-10)
+        if (this.transform.position.y <= -10)
         {
             Respawn();
 

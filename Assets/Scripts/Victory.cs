@@ -12,10 +12,9 @@ public class Victory : MonoBehaviour
     {
         if (other.tag =="Player")
         {
+
             textMeshProUGUI.enabled = true;
-
             float time = GameManager.Instance.timer;
-
             textMeshProUGUI.text = "Time goku sayayin 4: " + time;
 
             Time.timeScale = 0f;
